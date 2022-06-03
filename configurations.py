@@ -35,6 +35,7 @@ def base():
     config['att_dropout'] = 0.3
     config['ff_dropout'] = 0.3
     config['word_dropout'] = 0.1
+    config['source_eos'] = True
 
     # Decoding
     config['beam_size'] = 4

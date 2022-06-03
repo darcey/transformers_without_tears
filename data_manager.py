@@ -74,7 +74,9 @@ class DataManager(object):
         lens = []
         raw_data = self.io.load_bpe_data(pair, mode, src=True, input_file=input_file)
         for tokenized_line in raw_data:
-            ids = [self.vocab.get(tok, ac.UNK_ID) for tok in tokenized_line] + [ac.EOS_ID]
+            ids = [self.vocab.get(tok, ac.UNK_ID) for tok in tokenized_line]
+            if self.args.source_eos:
+                ids = ids + [ac.EOS_ID]
             data.append(ids)
             lens.append(len(ids))
 
