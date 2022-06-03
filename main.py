@@ -21,7 +21,7 @@ def get_parser():
     parser.add_argument('--translate-test', choices=('True','False'), default='False',
                         help='Used if in train_and_translate or translate mode, says whether to translate the test.[lang].bpe files in the processed data directory')
     parser.add_argument('--files-langs', type=str, nargs='+',
-                        help='Used if in train_and_translate or translate node, specifies which files to translate, format {input_filepath,output_filename,src_lang2tgt_lang...}. e.g.: data/test.en.bpe,test.en2vi.bpe,en2vi data/test.vi.bpe,test.vi2en.bpe,vi2en')
+                        help='Used if in train_and_translate or translate node, specifies which files to translate, format {input_filepath,output_filename,src_tgt...}. e.g.: data/test.en.bpe,test.en_vi.bpe,en_vi data/test.vi.bpe,test.vi_en.bpe,vi_en')
 
     parser.add_argument('--raw-data-dir', type=str, required=True,
                         help='Path to original data directory')
@@ -33,7 +33,7 @@ def get_parser():
                         help='Path to translate directory (where to output the translations)')
 
     parser.add_argument('--pairs', type=str, required=True,
-                        help='Command separated list of pairs in format src2tgt, e.g. en2vi,hu2en,uz2en')
+                        help='Comma separated list of pairs in format src_tgt, e.g. en_vi,hu_en,uz_en')
     parser.add_argument('--bleu-script', type=str, default='./scripts/multi-bleu.perl',
                         help='Path to multi-bleu.perl script')
     parser.add_argument('--log-freq', type=int, default=100,

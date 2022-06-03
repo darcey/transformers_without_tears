@@ -69,7 +69,7 @@ class IO(object):
             data_files[lang]['mask'] = mask_file
         
         for pair in self.pairs:
-            src_lang, tgt_lang = pair.split('2')
+            src_lang, tgt_lang = pair.split('_')
             data_files[pair] = {}
             for mode in [ac.TRAIN, ac.DEV, ac.TEST]:
                 data_files[pair][mode] = {}
