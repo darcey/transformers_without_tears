@@ -30,6 +30,8 @@ def get_parser():
                         help='whether to oversample training data so all languages are more fairly represented')
     parser.add_argument('--alpha', type=float, default=0.5,
                         help='oversampling prob when learning bpe, see https://arxiv.org/pdf/1901.07291.pdf')
+    parser.add_argument('--source-eos', choices=('True','False'), default='True',
+                        help='whether to append EOS to the end of the source sentence')
     return parser
 
 if __name__ == '__main__':
@@ -323,7 +325,9 @@ if __name__ == '__main__':
                     tgt_toks = tgt_line.strip().split()
 
                     if src_toks and tgt_toks:
-                        src_toks = [joint_vocab.get(tok, ac.UNK_ID) for tok in src_toks] + [ac.EOS_ID]
+                        src_toks = [joint_vocab.get(tok, ac.UNK_ID) for tok in src_toks]
+                        if args.source_eos == 'True':
+                            src_toks = src_toks + [ac.EOS_ID]
                         tgt_toks = [ac.BOS_ID] + [joint_vocab.get(tok, ac.UNK_ID) for tok in tgt_toks]
                         src_data.append(src_toks)
                         tgt_data.append(tgt_toks)
