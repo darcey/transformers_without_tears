@@ -1,5 +1,13 @@
 # Ace: An implementation of Transformer in Pytorch
-Original code by [Toan Q. Nguyen](http://tnq177.github.io), University of Notre Dame. This fork maintained by Notre Dame's [NLP group](https://nlp.nd.edu/).
+[Darcey Riley](https://darcey.github.io/)'s copy of the [Notre Dame NLP group](https://nlp.nd.edu/)'s fork of [Toan Q. Nguyen](http://tnq177.github.io) codebase.
+
+## Diffs between this copy and the NDNLP group's copy
+
+For our experiment, we wanted to try leaving the `EOS` token off the end of the source side. Added parameters to do this: `--source-eos False` in `preprocessing.py` and `config['source_eos'] = False` in `configurations.py`. Make sure these two parameters agree with each other!!
+
+The original code writes language pair names in the format `en2vi`, `de2en`, etc. We have changed this to `en_vi`, `de_en` etc. to make it possible to use numbers in the language names.
+
+## Overview
 
 This is the *re*-implementation of the paper [Transformers without Tears: Improving the Normalization of Self-Attention](https://arxiv.org/pdf/1910.05895.pdf).
 
@@ -22,21 +30,21 @@ Prior to using this codebase, you should do some initial preprocessing, such as:
 
 Transformer is known to not generalize well to sentences longer than what it's seen (see [this](https://arxiv.org/abs/1804.00247)), so we need long sentences during training. We don't have to worry about OOM because we always batch by number of tokens. Even a really long sentence of 250 words won't be have more than 2048/4096 BPE tokens.
 
-To use this codebase, create a `data_raw` directory. Then, for each language pair of `src_lang` and `tgt_lang`, create a folder of name `src_lang2tgt_lang` which has the following files:
+To use this codebase, create a `data_raw` directory. Then, for each language pair of `src` and `tgt`, create a folder of name `src_tgt` which has the following files:
 
-    train.src_lang   train.tgt_lang
-    dev.src_lang     dev.tgt_lang
-    test.src_lang    test.tgt_lang
+    train.src   train.tgt
+    dev.src     dev.tgt
+    test.src    test.tgt
 
 Additionally, create an empty `data_processed` directory.
 
 After that, install [fastBPE](https://github.com/glample/fastBPE). Then run:
 
-`python3 preprocessing.py --raw-data-dir data_raw --processed-data-dir data_processed --num-ops number_of_bpe_ops --pairs src_lang2tgt_lang --fast path_to_fastbpe_binary"`
+`python3 preprocessing.py --raw-data-dir data_raw --processed-data-dir data_processed --num-ops number_of_bpe_ops --pairs src_tgt,src2_tgt2,... --fast path_to_fastbpe_binary"`
 
 This will:
 
-* sample sentences from `train.{src_lang, tgt_lang}` to a joint text file
+* sample sentences from `train.{src, tgt}` to a joint text file
 * learn bpe from that
 * bpe-encode the rest of files
 * create vocabularies
@@ -49,11 +57,11 @@ Additional preprocessing options:
 * `--alpha {value}`: determines amount of oversampling
 * `--max-vocab-size`
 
-Example: if we're training an English-Vietnamese model (`en2vi`) using 8000 BPE operations, then the resultant directory looks like this:
+Example: if we're training an English-Vietnamese model (`en_vi`) using 8000 BPE operations, then the resultant directory looks like this:
 
 ```
 data
-├── en2vi
+├── en_vi
 │   ├── dev.en.bpe
 │   ├── dev.en.npy
 │   ├── dev.vi.bpe
@@ -106,26 +114,26 @@ There are three modes:
 To use the `train` mode:
 
 * write a new configuration function in `configurations.py`
-* run `python3 main.py --mode train --raw-data-dir ./data_raw --processed-data-dir ./data_processed --dump-dir ./dump --pairs src_lang2tgt_lang --config config_name`
+* run `python3 main.py --mode train --raw-data-dir ./data_raw --processed-data-dir ./data_processed --dump-dir ./dump --pairs src_tgt,src2_tgt2,... --config config_name`
 
 Note that I separate the two configs:
 
 * hyperparameters/training options: in `configurations.py`
 * what pairs are we training on, are we training or translating...: just see `main.py`
 
-Training is logged in `dump/DEBUG.log`. During training, the model is validated on the dev set, and the best checkpoint is saved to `dump/model-SCORE.pth` (also `dump/src_lang2tgt_lang-SCORE.pth`, they are the same). All best/beam translations, final training stats (train/dev perplexities)... are stored in `dump` as well.
+Training is logged in `dump/DEBUG.log`. During training, the model is validated on the dev set, and the best checkpoint is saved to `dump/model-SCORE.pth` (also `dump/src_tgt-SCORE.pth`, they are the same). All best/beam translations, final training stats (train/dev perplexities)... are stored in `dump` as well.
 
 To use `train_and_translate` mode, add some more parameters:
 
-`python3 main.py --mode train_and_translate --raw-data-dir ./data_raw --processed-data-dir ./data_processed --dump-dir ./dump --translate-dir ./translate --translate-test True --pairs src_lang2tgt_lang --config config_name`
+`python3 main.py --mode train_and_translate --raw-data-dir ./data_raw --processed-data-dir ./data_processed --dump-dir ./dump --translate-dir ./translate --translate-test True --pairs src_tgt,src2_tgt2,... --config config_name`
 
-This will translate the test data and store the output in `./translate`. When translating `test.en.bpe` from language pair `en2vi` it will write the translations to `./translate/test.en2vi.bpe.*`.
+This will translate the test data and store the output in `./translate`. When translating `test.en.bpe` from language pair `en_vi` it will write the translations to `./translate/test.en_vi.bpe.*`.
 
 To translate using a checkpoint, run:
 
-`python3 main.py --mode translate --raw-data-dir ./data_raw --processed-data-dir ./data_processed --dump-dir ./dump --translate-dir ./translate --files-langs data_proc/src_lang2tgt_lang/temp,temp,src_lang2tgt_lang --config src_lang2tgt_lang --pairs src_lang2tgt_lang --model-file dump/src_lang2tgt_lang-SCORE.pth`
+`python3 main.py --mode translate --raw-data-dir ./data_raw --processed-data-dir ./data_processed --dump-dir ./dump --translate-dir ./translate --files-langs data_proc/src_tgt/temp,temp,src_tgt --config src_tgt --pairs src_tgt --model-file dump/src_tgt-SCORE.pth`
 
-`--files-langs` lets you list specific files to translate. Format is `{path_to_file},{output_name},{src_lang}2{tgt_lang}`. It will write the translations to `./translate/{output_name}.*`.
+`--files-langs` lets you list specific files to translate. Format is `{path_to_file},{output_name},{src}_{tgt}`. It will write the translations to `./translate/{output_name}.*`.
 
 (You can also use `--translate-test` in `translate` mode, and `--files-langs` in `train_and_translate` mode. You can even use both at once.)
 

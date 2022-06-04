@@ -58,7 +58,7 @@ class DataManager(object):
             self.train_iters[pair] = self.data[pair][ac.TRAIN].get_iter(shuffle=True)
             src, tgt, targets = next(self.train_iters[pair])
 
-        src_lang, tgt_lang = pair.split('2')
+        src_lang, tgt_lang = pair.split('_')
         return {
             'src': src,
             'tgt': tgt,

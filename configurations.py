@@ -47,7 +47,7 @@ def base():
     return config
 
 
-def en2vi():
+def en_vi():
     config = base()
     config['epoch_size'] = 1500
     return config

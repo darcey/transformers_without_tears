@@ -263,7 +263,7 @@ class Controller(object):
         avg_ppls = []
         with torch.no_grad():
             for pair in self.pairs:
-                src_lang, tgt_lang = pair.split('2')
+                src_lang, tgt_lang = pair.split('_')
                 src_lang_idx = self.data_manager.lang_vocab[src_lang]
                 tgt_lang_idx = self.data_manager.lang_vocab[tgt_lang]
                 loss = 0.
@@ -373,7 +373,7 @@ class Controller(object):
         return all_best_trans, all_beam_trans
 
     def translate(self, pair, mode, input_file=None, batch_size=4096):
-        src_lang, tgt_lang = pair.split('2')
+        src_lang, tgt_lang = pair.split('_')
 
         src_lang_idx = self.data_manager.lang_vocab[src_lang]
         tgt_lang_idx = self.data_manager.lang_vocab[tgt_lang]
