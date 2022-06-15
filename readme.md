@@ -7,6 +7,8 @@ For our experiment, we wanted to try leaving the `EOS` token off the end of the 
 
 The original code writes language pair names in the format `en2vi`, `de2en`, etc. We have changed this to `en_vi`, `de_en` etc. to make it possible to use numbers in the language names.
 
+Last, we have added code to split the data into its truncated versions. `split_data.py` takes the original data and makes the versions. A new preprocessing script `preprocessing_splits.py` applies BPE to the different splits in a consistent manner (its usage is different from the original `preprocessing.py` so please see the comments and the `--help` menu for details).
+
 ## Overview
 
 This is the *re*-implementation of the paper [Transformers without Tears: Improving the Normalization of Self-Attention](https://arxiv.org/pdf/1910.05895.pdf).
