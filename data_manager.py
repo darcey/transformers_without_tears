@@ -155,6 +155,7 @@ class NMTDataset(object):
         return len(self.batches)
 
     def prepare_one_batch(self, src, tgt, src_lens, tgt_lens):
+    
         num_sents = len(src)
         max_src_len = max(src_lens)
         max_tgt_len = max(tgt_lens)
@@ -164,9 +165,9 @@ class NMTDataset(object):
         target_batch = np.zeros([num_sents, max_tgt_len], dtype=np.int32)
 
         for i in range(num_sents):
-            src_batch[i] = src[i] + (max_src_len - src_lens[i]) * [ac.PAD_ID]
-            tgt_batch[i] = tgt[i] + (max_tgt_len - tgt_lens[i]) * [ac.PAD_ID]
-            target_batch[i] = tgt[i][1:] + [ac.EOS_ID] + (max_tgt_len - tgt_lens[i]) * [ac.PAD_ID]
+            src_batch[i] = list(src[i]) + (max_src_len - src_lens[i]) * [ac.PAD_ID]
+            tgt_batch[i] = list(tgt[i]) + (max_tgt_len - tgt_lens[i]) * [ac.PAD_ID]
+            target_batch[i] = list(tgt[i][1:]) + [ac.EOS_ID] + (max_tgt_len - tgt_lens[i]) * [ac.PAD_ID]
 
         src_batch = torch.from_numpy(src_batch).type(torch.long)
         tgt_batch = torch.from_numpy(tgt_batch).type(torch.long)
