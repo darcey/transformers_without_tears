@@ -185,8 +185,7 @@ class IO(object):
         with open(bpe_file, 'r') as fin:
             for line in fin:
                 toks = line.strip().split()
-                if toks:
-                    data.append(toks)
+                data.append(toks)
         
         return data
     
