@@ -35,6 +35,7 @@ def base():
     config['att_dropout'] = 0.3
     config['ff_dropout'] = 0.3
     config['word_dropout'] = 0.1
+    config['source_eos'] = True
 
     # Decoding
     config['decode_method'] = ac.BEAM_SEARCH
@@ -50,7 +51,7 @@ def base():
     return config
 
 
-def en2vi():
+def en_vi():
     config = base()
     config['epoch_size'] = 1500
     return config

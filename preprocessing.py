@@ -19,7 +19,7 @@ def get_parser():
     parser.add_argument('--fast', type=str, required=True,
                         help='path to fastBPE binary')
     parser.add_argument('--pairs', type=str, required=True,
-                        help='command-separated list of language pairs, e.g. en2vi,ar2en,gl2en')
+                        help='comma-separated list of language pairs, e.g. en_vi,ar_en,gl_en')
     parser.add_argument('--num-ops', type=str, required=True,
                         help='number of BPE operations (if joint BPE, provide one number; if separate BPE, provide a number for each language, like en:6000,vi:6000)')
     parser.add_argument('--max-vocab-size', type=int, default=0,
@@ -30,6 +30,8 @@ def get_parser():
                         help='whether to oversample training data so all languages are more fairly represented')
     parser.add_argument('--alpha', type=float, default=0.5,
                         help='oversampling prob when learning bpe, see https://arxiv.org/pdf/1901.07291.pdf')
+    parser.add_argument('--source-eos', choices=('True','False'), default='True',
+                        help='whether to append EOS to the end of the source sentence')
     return parser
 
 if __name__ == '__main__':
@@ -45,7 +47,7 @@ if __name__ == '__main__':
     pairs = list(sorted(args.pairs.split(',')))
     langs = []
     for pair in pairs:
-        langs.extend(pair.split('2'))
+        langs.extend(pair.split('_'))
     langs = list(sorted(set(langs)))
     print('Languages: ', langs)
 
@@ -82,7 +84,7 @@ if __name__ == '__main__':
     bpe_files = {}
     npy_files = {}
     for pair in pairs:
-        for lang in pair.split('2'):
+        for lang in pair.split('_'):
             for mode in [ac.TRAIN, ac.DEV, ac.TEST]:
                 input_files[(pair, lang, mode)] = join(raw_dir, f'{pair}/{mode}.{lang}')
                 bpe_files[(pair, lang, mode)] = join(proc_dir, f'{pair}/{mode}.{lang}.bpe')
@@ -117,7 +119,7 @@ if __name__ == '__main__':
     print('Grouping data together by language')
     datas = {lang: [] for lang in langs}
     for pair in pairs:
-        for lang in pair.split('2'):
+        for lang in pair.split('_'):
             infile = input_files[(pair, lang, ac.TRAIN)]
             with open(infile, 'r') as fin:
                 datas[lang].extend(fin.readlines())
@@ -207,7 +209,7 @@ if __name__ == '__main__':
         # the BPE vocab for [lang] consists of all BPE tokens which only appeared in [lang].
         # this is necessary for encoding the dev/test data, since we only want to encode it
         # using tokens which appeared during training.
-        # (example: say that we're doing de2en, and during training, we see the token 'ation'
+        # (example: say that we're doing de_en, and during training, we see the token 'ation'
         #  in the en data but not the de data. when encoding the dev and test data, we want
         #  to make sure not to use 'ation' on the de side, since the tranformer will not have
         #  seen that token on the de side during training.)
@@ -227,7 +229,7 @@ if __name__ == '__main__':
         # applying BPE to train,dev,test
         print('Apply BPE to all data')
         for pair in pairs:
-            for lang in pair.split('2'):
+            for lang in pair.split('_'):
                 bpe_vocab_file = bpe_vocab_files[lang]
                 for mode in [ac.TRAIN, ac.DEV, ac.TEST]:
                     infile = input_files[(pair, lang, mode)]
@@ -254,7 +256,7 @@ if __name__ == '__main__':
         # (no need to learn vocab when doing separate BPE)
         print('Apply BPE to all data')
         for pair in pairs:
-            for lang in pair.split('2'):
+            for lang in pair.split('_'):
                 for mode in [ac.TRAIN, ac.DEV, ac.TEST]:
                     infile = input_files[(pair, lang, mode)]
                     encoded_file = bpe_files[(pair, lang, mode)]
@@ -269,7 +271,7 @@ if __name__ == '__main__':
     joint_vocab = Counter()
     sub_vocabs = {lang: Counter() for lang in langs}
     for pair in pairs:
-        for lang in pair.split('2'):
+        for lang in pair.split('_'):
             infile = bpe_files[(pair, lang, ac.TRAIN)]
             with open(infile, 'r') as fin:
                 for line in fin:
@@ -314,7 +316,7 @@ if __name__ == '__main__':
             # read in parallel to make sure we remove empty lines
             src_data = []
             tgt_data = []
-            src_lang, tgt_lang = pair.split('2')
+            src_lang, tgt_lang = pair.split('_')
             src_infile = bpe_files[(pair, src_lang, mode)]
             tgt_infile = bpe_files[(pair, tgt_lang, mode)]
             with open(src_infile, 'r') as f_src, open(tgt_infile, 'r') as f_tgt:
@@ -323,7 +325,9 @@ if __name__ == '__main__':
                     tgt_toks = tgt_line.strip().split()
 
                     if src_toks and tgt_toks:
-                        src_toks = [joint_vocab.get(tok, ac.UNK_ID) for tok in src_toks] + [ac.EOS_ID]
+                        src_toks = [joint_vocab.get(tok, ac.UNK_ID) for tok in src_toks]
+                        if args.source_eos == 'True':
+                            src_toks = src_toks + [ac.EOS_ID]
                         tgt_toks = [ac.BOS_ID] + [joint_vocab.get(tok, ac.UNK_ID) for tok in tgt_toks]
                         src_data.append(src_toks)
                         tgt_data.append(tgt_toks)
